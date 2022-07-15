@@ -5,7 +5,7 @@ exports.id = 888;
 exports.ids = [888];
 exports.modules = {
 
-/***/ 785:
+/***/ 809:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 // ESM COMPAT FLAG
@@ -20,14 +20,15 @@ __webpack_require__.d(__webpack_exports__, {
 const jsx_runtime_namespaceObject = require("react/jsx-runtime");
 // EXTERNAL MODULE: external "react"
 var external_react_ = __webpack_require__(689);
+;// CONCATENATED MODULE: ./types/movie/index.ts
+const TimeFormat = "HH:mm:ss";
+
 ;// CONCATENATED MODULE: external "moment"
 const external_moment_namespaceObject = require("moment");
 var external_moment_default = /*#__PURE__*/__webpack_require__.n(external_moment_namespaceObject);
-;// CONCATENATED MODULE: ./pages/_app.tsx
+;// CONCATENATED MODULE: ./services/movie/index.ts
 
 
-
-const timeFormat = "HH:mm:ss";
 const movies = [
     {
         name: "Moonlight",
@@ -76,31 +77,45 @@ const movies = [
         ]
     }, 
 ];
+/**
+ *
+ * @param items : movie data
+ * @param keyword : string, use for search
+ * @param time : string format HH:mm, use for search by time
+ * @returns filtered movies
+ */ const moviesFilter = (items, keyword = "", time = "")=>{
+    // add vitural field keyword, times for query purpose
+    return items.map((item)=>{
+        return {
+            ...item,
+            keyword: keyword,
+            times: item.showings.map((t)=>external_moment_default()(t, TimeFormat))
+        };
+    })// filter by gern
+    .filter((item)=>item.genres.find((i)=>i.toLowerCase().includes(keyword.toLowerCase())))// filter by time: the input + 30min is equal or before the time showing
+    .filter((i)=>{
+        if (time && external_moment_default()(`${time}:00`, TimeFormat).isValid()) {
+            const inTime = external_moment_default()(`${time}:00`, TimeFormat);
+            const before30Min = inTime.add(+30, "minutes");
+            return i.showings.find((t)=>{
+                const before30m = external_moment_default()(t, TimeFormat).isSameOrAfter(before30Min);
+                return before30m;
+            });
+        }
+        return i;
+    }).sort((a, b)=>a.keyword.localeCompare(b.keyword) || b.rating - a.rating);
+};
+
+;// CONCATENATED MODULE: ./pages/_app.tsx
+
+
+
 const Home = ()=>{
     const { 0: gern , 1: setGern  } = (0,external_react_.useState)("");
     const { 0: time , 1: setTime  } = (0,external_react_.useState)("");
     const { 0: movieItems , 1: setMovieItems  } = (0,external_react_.useState)([]);
-    const getRecommends = (0,external_react_.useCallback)(async ()=>{
-        const moviesByGern = movies// add vitural field keyword, times for query purpose
-        .map((item)=>{
-            return {
-                ...item,
-                keyword: gern,
-                times: item.showings.map((t)=>external_moment_default()(t, timeFormat))
-            };
-        })// filter by gern
-        .filter((item)=>item.genres.find((i)=>i.toLowerCase().includes(gern.toLowerCase())))// filter by time: the input + 30min is equal or before the time showing
-        .filter((i)=>{
-            if (time && external_moment_default()(`${time}:00`, timeFormat).isValid()) {
-                const inTime = external_moment_default()(`${time}:00`, timeFormat);
-                const before30Min = inTime.add(+30, "minutes");
-                return i.showings.find((t)=>{
-                    const before30m = external_moment_default()(t, timeFormat).isSameOrAfter(before30Min);
-                    return before30m;
-                });
-            }
-            return i;
-        }).sort((a, b)=>a.keyword.localeCompare(b.keyword) || b.rating - a.rating);
+    const getRecommends = (0,external_react_.useCallback)(()=>{
+        const moviesByGern = moviesFilter(movies, gern, time);
         setMovieItems(moviesByGern);
     }, [
         time,
@@ -193,7 +208,7 @@ module.exports = require("react");
 var __webpack_require__ = require("../webpack-runtime.js");
 __webpack_require__.C(exports);
 var __webpack_exec__ = (moduleId) => (__webpack_require__(__webpack_require__.s = moduleId))
-var __webpack_exports__ = (__webpack_exec__(785));
+var __webpack_exports__ = (__webpack_exec__(809));
 module.exports = __webpack_exports__;
 
 })();
